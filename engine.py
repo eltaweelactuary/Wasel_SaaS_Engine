@@ -19,6 +19,22 @@ app = Flask(__name__)
 CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode="eventlet", ping_timeout=60, ping_interval=25)
 
+# ── Rate Limiting (per API key, in-memory) ──
+from collections import defaultdict
+RATE_LIMIT = int(os.environ.get("RATE_LIMIT_PER_MIN", 30))  # requests per minute
+_rate_counters = defaultdict(list)
+
+def is_rate_limited(api_key):
+    """Simple sliding-window rate limiter."""
+    now = time.time()
+    window = _rate_counters[api_key]
+    # Remove entries older than 60 seconds
+    _rate_counters[api_key] = [t for t in window if now - t < 60]
+    if len(_rate_counters[api_key]) >= RATE_LIMIT:
+        return True
+    _rate_counters[api_key].append(now)
+    return False
+
 client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
 MODEL = "gemini-2.0-flash"
 
@@ -47,10 +63,14 @@ def analyze_frames(pil_images_list):
         )
         return response.text.strip(), 200
     except Exception as e:
+        error_str = str(e).lower()
+        if "resource" in error_str and "exhaust" in error_str:
+            logger.error(f"Gemini quota exhausted: {e}")
+            return "Quota Exceeded", 429
         logger.error(f"API Error: {e}")
         return "Processing Error", 500
 
-MAX_PAYLOAD_SIZE = 500_000  # ~500KB per image max
+MAX_PAYLOAD_SIZE = 100_000  # ~100KB per image (320x240 WebP ≈ 20-30KB)
 
 def decode_images(b64_list):
     """Decode base64 images to PIL, shared by REST and WebSocket."""
@@ -89,6 +109,11 @@ def require_api_key(func):
 def translate_api():
     start_time = time.time()
     
+    # Rate limit check
+    client_key = request.headers.get("X-API-Key", "")
+    if is_rate_limited(client_key):
+        return jsonify({"error": "Too Many Requests", "retry_after_seconds": 10}), 429
+    
     if not request.is_json:
         return jsonify({"error": "Bad Request"}), 400
         
@@ -111,6 +136,8 @@ def translate_api():
             return jsonify({"error": "Empty images list"}), 400
 
         result, status_code = analyze_frames(pil_images)
+        if status_code == 429:
+            return jsonify({"error": "Quota Exceeded", "retry_after_seconds": 30}), 429
         if status_code != 200:
              return jsonify({"error": "Failed"}), status_code
 

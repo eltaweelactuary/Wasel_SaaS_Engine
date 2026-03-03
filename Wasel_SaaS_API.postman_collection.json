@@ -1,0 +1,76 @@
+{
+    "info": {
+        "_postman_id": "a1b2c3d4-e5f6-7890-1234-56789abcdef0",
+        "name": "Wasel v4 SaaS Engine",
+        "description": "API collection for Wasel Sign Language Translation Engine (Konecta AI).\n\nBase URL: https://wasel-saas-engine-112458895076.europe-west1.run.app\nAPI Key: dx_egypt_key_2026\n\nSee INTEGRATION_GUIDE.md for full documentation.",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "1. Health Check",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "https://wasel-saas-engine-112458895076.europe-west1.run.app/api/v1/health",
+                    "protocol": "https",
+                    "host": [
+                        "wasel-saas-engine-112458895076",
+                        "europe-west1",
+                        "run",
+                        "app"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "health"
+                    ]
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "2. Translate Frame",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "X-API-Key",
+                        "value": "dx_egypt_key_2026",
+                        "type": "text"
+                    },
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"images_base64\": [\n        \"data:image/webp;base64,UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA==\"\n    ]\n}",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    }
+                },
+                "url": {
+                    "raw": "https://wasel-saas-engine-112458895076.europe-west1.run.app/api/v1/translate",
+                    "protocol": "https",
+                    "host": [
+                        "wasel-saas-engine-112458895076",
+                        "europe-west1",
+                        "run",
+                        "app"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "translate"
+                    ]
+                }
+            },
+            "response": []
+        }
+    ]
+}
