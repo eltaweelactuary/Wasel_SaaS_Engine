@@ -24,20 +24,23 @@ MODEL = "gemini-2.0-flash"
 
 SECRET_SYSTEM_PROMPT = """
 أنت خبير ومترجم للغة الإشارة المصرية (Egyptian Sign Language - ESL).
-انظر إلى هذه الصورة لليد والجسم. هل يقوم الشخص بعمل إشارة معينة بلغة الإشارة؟
+انظر إلى هذا التسلسل الحركي للصور (Motion Sequence) لليد والجسم. هل يقوم الشخص بعمل إشارة معينة بلغة الإشارة؟
 إذا نعم: أجب فقط بمعنى الإشارة باللغة 'العربية' في كلمة واحدة أو كلمتين كحد أقصى (مثال: شكرا، نعم، لا، مساعدة، سلام).
 إذا لم تكن هناك إشارة واضحة: أجب بالضبط بـ: ...
 لا تكتب أي شرح، فقط الكلمة.
 """
 
-def analyze_frame(pil_image):
+def analyze_frames(pil_images_list):
     if not client:
         return "Internal Error", 500
 
     try:
+        # Pass the prompt and the sequence of images to Gemini to understand the motion
+        contents_payload = [SECRET_SYSTEM_PROMPT] + pil_images_list
+        
         response = client.models.generate_content(
             model=MODEL,
-            contents=[SECRET_SYSTEM_PROMPT, pil_image],
+            contents=contents_payload,
             config=types.GenerateContentConfig(
                 max_output_tokens=20,
                 temperature=0.1
@@ -66,20 +69,35 @@ def translate_api():
         return jsonify({"error": "Bad Request"}), 400
         
     data = request.json
-    if "image_base64" not in data:
-        return jsonify({"error": "Bad Request"}), 400
+    
+    # Accept either historical single image or new multi-frame array
+    b64_list = []
+    if "images_base64" in data and isinstance(data["images_base64"], list):
+        b64_list = data["images_base64"]
+    elif "image_base64" in data:
+        b64_list = [data["image_base64"]]
+    else:
+        return jsonify({"error": "Missing 'images_base64' array"}), 400
+
+    # Limit to maximum 5 frames per request to prevent abuse and latency
+    if len(b64_list) > 5:
+        b64_list = b64_list[-5:]
 
     try:
-        b64_string = data["image_base64"]
-        if "," in b64_string:
-            b64_string = b64_string.split(",")[1]
-            
-        img_bytes = base64.b64decode(b64_string)
-        pil_img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
+        pil_images = []
+        for b64_string in b64_list:
+            if "," in b64_string:
+                b64_string = b64_string.split(",")[1]
+                
+            img_bytes = base64.b64decode(b64_string)
+            pil_img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
+            pil_img.thumbnail((512, 512))
+            pil_images.append(pil_img)
         
-        pil_img.thumbnail((512, 512))
-        
-        result, status_code = analyze_frame(pil_img)
+        if not pil_images:
+            return jsonify({"error": "Empty images list"}), 400
+
+        result, status_code = analyze_frames(pil_images)
         if status_code != 200:
              return jsonify({"error": "Failed"}), status_code
 
@@ -87,7 +105,8 @@ def translate_api():
         
         return jsonify({
             "translation": result,
-            "processing_time_ms": ms
+            "processing_time_ms": ms,
+            "frames_analyzed": len(pil_images)
         }), 200
         
     except Exception as e:
