@@ -1,4 +1,4 @@
-import os, time, base64, io, logging, argparse
+import os, time, base64, io, logging
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from PIL import Image
@@ -7,11 +7,6 @@ from google.genai import types
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("wasel-saas")
-
-parser = argparse.ArgumentParser()
-parser.add_argument("--port", type=int, default=8000)
-parser.add_argument("--host", default="0.0.0.0")
-args = parser.parse_args()
 
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 VALID_CLIENT_KEYS = [k.strip() for k in os.environ.get("VALID_CLIENT_KEYS", "").split(",") if k.strip()]
@@ -122,4 +117,5 @@ def health_check():
     return jsonify({"status": "online"}), 200
 
 if __name__ == "__main__":
-    app.run(host=args.host, port=args.port, debug=False)
+    port = int(os.environ.get("PORT", 8000))
+    app.run(host="0.0.0.0", port=port, debug=False)
