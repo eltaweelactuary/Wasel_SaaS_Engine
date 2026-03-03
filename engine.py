@@ -1,3 +1,6 @@
+import eventlet
+eventlet.monkey_patch()
+
 import os, time, base64, io, logging
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -47,16 +50,25 @@ def analyze_frames(pil_images_list):
         logger.error(f"API Error: {e}")
         return "Processing Error", 500
 
+MAX_PAYLOAD_SIZE = 500_000  # ~500KB per image max
+
 def decode_images(b64_list):
     """Decode base64 images to PIL, shared by REST and WebSocket."""
     pil_images = []
     for b64_string in b64_list:
-        if "," in b64_string:
-            b64_string = b64_string.split(",")[1]
-        img_bytes = base64.b64decode(b64_string)
-        pil_img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
-        pil_img.thumbnail((512, 512))
-        pil_images.append(pil_img)
+        try:
+            if len(b64_string) > MAX_PAYLOAD_SIZE:
+                logger.warning("Payload too large, skipping frame")
+                continue
+            if "," in b64_string:
+                b64_string = b64_string.split(",")[1]
+            img_bytes = base64.b64decode(b64_string)
+            pil_img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
+            pil_img.thumbnail((512, 512))
+            pil_images.append(pil_img)
+        except Exception as e:
+            logger.warning(f"Skipping corrupt frame: {e}")
+            continue
     return pil_images
 
 def require_api_key(func):
