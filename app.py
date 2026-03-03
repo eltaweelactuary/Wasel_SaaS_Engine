@@ -103,6 +103,10 @@ def translate_api():
 
         ms = int((time.time() - start_time) * 1000)
         
+        # Performance optimization for frontend handling
+        if result == "...":
+            return "", 204
+            
         return jsonify({
             "translation": result,
             "processing_time_ms": ms,
