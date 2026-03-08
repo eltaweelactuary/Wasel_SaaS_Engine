@@ -2,7 +2,7 @@
     "info": {
         "_postman_id": "a1b2c3d4-e5f6-7890-1234-56789abcdef0",
         "name": "Wasel v4 SaaS Engine",
-        "description": "API collection for Wasel Sign Language Translation Engine (Konecta AI).\n\nBase URL: https://wasel-saas-engine-112458895076.europe-west1.run.app\nAPI Key: dx_egypt_key_2026\n\nSee INTEGRATION_GUIDE.md for full documentation.",
+        "description": "API collection for Wasel Sign Language Translation Engine (Konecta AI).\n\nBase URL: https://wasel-saas-engine-112458895076.europe-west1.run.app\nAPI Key: <YOUR_API_KEY>\n\nSee INTEGRATION_GUIDE.md for full documentation.",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
     "item": [
@@ -36,7 +36,7 @@
                 "header": [
                     {
                         "key": "X-API-Key",
-                        "value": "dx_egypt_key_2026",
+                        "value": "<YOUR_API_KEY>",
                         "type": "text"
                     },
                     {

@@ -7,7 +7,7 @@
 | | Value |
 |---|---|
 | **Base URL** | `https://wasel-saas-engine-112458895076.europe-west1.run.app` |
-| **API Key** | `dx_egypt_key_2026` |
+| **API Key** | `<YOUR_API_KEY>` |
 | **Health** | `GET /api/v1/health` → `{"status": "online"}` |
 
 ---
@@ -16,7 +16,7 @@
 
 ```
 POST /api/v1/translate
-Header: X-API-Key: dx_egypt_key_2026
+Header: X-API-Key: <YOUR_API_KEY>
 ```
 
 **Request:**
@@ -72,7 +72,7 @@ import requests
 r = requests.post(
     "https://wasel-saas-engine-112458895076.europe-west1.run.app/api/v1/translate",
     json={"images_base64": [base64_image]},
-    headers={"X-API-Key": "dx_egypt_key_2026"}, timeout=5
+    headers={"X-API-Key": "<YOUR_API_KEY>"}, timeout=5
 )
 if r.status_code == 200: print(r.json()["translation"])
 elif r.status_code == 429: time.sleep(r.json().get("retry_after_seconds", 10))
@@ -81,7 +81,7 @@ elif r.status_code == 429: time.sleep(r.json().get("retry_after_seconds", 10))
 **cURL:**
 ```bash
 curl -X POST "https://wasel-saas-engine-112458895076.europe-west1.run.app/api/v1/translate" \
-  -H "X-API-Key: dx_egypt_key_2026" -H "Content-Type: application/json" \
+  -H "X-API-Key: <YOUR_API_KEY>" -H "Content-Type: application/json" \
   -d '{"images_base64": ["data:image/webp;base64,..."]}'
 ```
 
@@ -93,7 +93,7 @@ Connect via [Socket.IO v4](https://socket.io/):
 
 ```
 Client → connect
-Client → emit('auth', {api_key: 'dx_egypt_key_2026'})
+Client → emit('auth', {api_key: '<YOUR_API_KEY>'})
 Server → emit('auth_result', {ok: true})
 
 Client → emit('frame', {image: 'data:image/webp;base64,...'})   ← repeat
@@ -107,7 +107,7 @@ import { io } from "socket.io-client";
 const socket = io("https://wasel-saas-engine-112458895076.europe-west1.run.app", 
     { transports: ['websocket'] });
 
-socket.on('connect', () => socket.emit('auth', { api_key: 'dx_egypt_key_2026' }));
+socket.on('connect', () => socket.emit('auth', { api_key: '<YOUR_API_KEY>' }));
 
 socket.on('result', (data) => {
     if (data.translation && data.translation !== "...") 

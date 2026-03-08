@@ -1,0 +1,7 @@
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+Wasel_SaaS_API.postman_collection.json
+INTEGRATION_GUIDE.md
